@@ -9,7 +9,6 @@ const SERVICES = [
   { id: 6, title: "Sobrancelha", price: 5 },
 ];
 
-// gera horários de 30 em 30
 function generateTimes() {
   const times = [];
   let h = 9;
@@ -29,13 +28,12 @@ function generateTimes() {
 export default function App() {
   const TIMES = generateTimes();
 
-  const [selectedServices, setSelectedServices] = useState([]);
   const [name, setName] = useState("");
+  const [selectedServices, setSelectedServices] = useState([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [blockedTimes, setBlockedTimes] = useState([]);
 
-  // carregar horários já ocupados
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("bookings")) || [];
     setBlockedTimes(saved);
@@ -49,11 +47,16 @@ export default function App() {
     );
   }
 
+  function isBlocked(t) {
+    return blockedTimes.some(
+      (b) => b.date === date && b.time === t
+    );
+  }
+
   function handleConfirm(e) {
     e.preventDefault();
 
     const newBooking = { date, time };
-
     const saved = JSON.parse(localStorage.getItem("bookings")) || [];
     localStorage.setItem("bookings", JSON.stringify([...saved, newBooking]));
 
@@ -62,7 +65,7 @@ export default function App() {
       .join(", ");
 
     const msg = `
-✂️ *Agendamento Barbearia*
+✂️ *Agendamento - WZ do Corte*
 👤 Nome: ${name}
 📅 Data: ${date}
 ⏰ Horário: ${time}
@@ -73,72 +76,96 @@ export default function App() {
       `https://wa.me/5584987716386?text=${encodeURIComponent(msg)}`,
       "_blank"
     );
-
-    setTime("");
-  }
-
-  function isBlocked(t) {
-    return blockedTimes.some(
-      (b) => b.date === date && b.time === t
-    );
   }
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h1 className="text-xl font-bold mb-4">Agendamento</h1>
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-md mx-auto bg-white rounded-xl shadow p-4 space-y-4">
 
-      {/* SERVIÇOS */}
-      {SERVICES.map((s) => (
-        <label key={s.id} className="flex justify-between py-2">
-          <span>{s.title} - R$ {s.price}</span>
-          <input
-            type="checkbox"
-            onChange={() => toggleService(s)}
-            checked={selectedServices.some(x => x.id === s.id)}
-          />
-        </label>
-      ))}
+        <h1 className="text-xl font-bold text-center">
+          Agendamento Online
+        </h1>
 
-      {/* FORM */}
-      <form onSubmit={handleConfirm} className="space-y-4 mt-4">
+        {/* NOME */}
         <input
           required
           placeholder="Seu nome"
           className="w-full p-3 border rounded"
+          value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
-        <input
-          required
-          type="date"
-          className="w-full p-3 border rounded"
-          onChange={(e) => setDate(e.target.value)}
-        />
+        {/* SERVIÇOS */}
+        {name && (
+          <>
+            <h2 className="font-semibold">Escolha os serviços</h2>
+
+            <div className="space-y-2">
+              {SERVICES.map((s) => {
+                const active = selectedServices.some(x => x.id === s.id);
+
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => toggleService(s)}
+                    className={`w-full flex justify-between p-3 rounded border
+                    ${active ? "bg-black text-white" : "bg-gray-50"}`}
+                  >
+                    <span>{s.title}</span>
+                    <span>R$ {s.price}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* DATA */}
+        {selectedServices.length > 0 && (
+          <>
+            <h2 className="font-semibold">Escolha a data</h2>
+            <input
+              type="date"
+              required
+              className="w-full p-3 border rounded"
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </>
+        )}
 
         {/* HORÁRIOS */}
-        <div className="grid grid-cols-3 gap-2">
-          {TIMES.map((t) => (
-            <button
-              type="button"
-              key={t}
-              disabled={isBlocked(t)}
-              onClick={() => setTime(t)}
-              className={`py-2 rounded font-bold text-sm
-                ${time === t ? "bg-black text-white" : "bg-gray-100"}
-                ${isBlocked(t) && "opacity-40 cursor-not-allowed"}`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        {date && (
+          <>
+            <h2 className="font-semibold">Horário</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {TIMES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={isBlocked(t)}
+                  onClick={() => setTime(t)}
+                  className={`py-3 rounded font-bold text-sm
+                    ${time === t ? "bg-black text-white" : "bg-gray-200"}
+                    ${isBlocked(t) && "opacity-40"}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
-        <button
-          disabled={!time || selectedServices.length === 0}
-          className="w-full bg-black text-white py-3 rounded font-bold"
-        >
-          Confirmar no WhatsApp
-        </button>
-      </form>
+        {/* CONFIRMAR */}
+        {time && (
+          <button
+            onClick={handleConfirm}
+            className="w-full bg-green-600 text-white py-4 rounded font-bold"
+          >
+            Confirmar no WhatsApp
+          </button>
+        )}
+      </div>
     </div>
   );
-    }
+      }
