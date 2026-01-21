@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 
 const SERVICES = [
   { id: 1, title: "Corte degradê", price: 25 },
